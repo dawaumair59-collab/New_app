@@ -3,24 +3,35 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
+import HomePage from "@/pages/home";
+import MenuPage from "@/pages/menu";
+import CartPage from "@/pages/cart";
+import OrderStatusPage from "@/pages/order-status";
+import AdminDashboard from "@/pages/admin-dashboard";
+import AdminOrders from "@/pages/admin-orders";
+import AdminMenu from "@/pages/admin-menu";
+import AdminTables from "@/pages/admin-tables";
 
-const queryClient = new QueryClient();
-
-function Home() {
-  return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-gray-900">Replit Agent is building...</h1>
-        <p className="mt-2 text-sm text-gray-600">Your app will appear here once it's ready.</p>
-      </div>
-    </div>
-  );
-}
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 30_000,
+    },
+  },
+});
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Home} />
+      <Route path="/" component={HomePage} />
+      <Route path="/menu" component={MenuPage} />
+      <Route path="/cart" component={CartPage} />
+      <Route path="/order-status/:id" component={OrderStatusPage} />
+      <Route path="/admin" component={AdminDashboard} />
+      <Route path="/admin/orders" component={AdminOrders} />
+      <Route path="/admin/menu" component={AdminMenu} />
+      <Route path="/admin/tables" component={AdminTables} />
       <Route component={NotFound} />
     </Switch>
   );

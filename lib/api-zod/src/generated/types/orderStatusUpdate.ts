@@ -5,7 +5,8 @@
  * Tasty Point Restaurant QR Ordering Platform API
  * OpenAPI spec version: 0.1.0
  */
+import type { OrderStatusUpdateStatus } from "./orderStatusUpdateStatus";
 
-export interface HealthStatus {
-  status: string;
+export interface OrderStatusUpdate {
+  status: OrderStatusUpdateStatus;
 }

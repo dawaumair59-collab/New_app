@@ -6,6 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HealthStatus {
-  status: string;
+export interface TableInput {
+  /** @minimum 1 */
+  tableNumber: number;
+  name?: string;
+  /** @minimum 1 */
+  capacity?: number;
+  isActive?: boolean;
 }

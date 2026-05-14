@@ -6,6 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HealthStatus {
-  status: string;
+export interface PaymentOrderInput {
+  /** Amount in rupees */
+  amount: number;
+  currency: string;
+  /** Our internal order ID */
+  orderId: number;
 }
