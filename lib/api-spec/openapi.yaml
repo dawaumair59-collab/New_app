@@ -3,13 +3,28 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Tasty Point Restaurant QR Ordering Platform API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: categories
+    description: Menu category operations
+  - name: menu-items
+    description: Menu item operations
+  - name: tables
+    description: Restaurant table operations
+  - name: orders
+    description: Order operations
+  - name: dashboard
+    description: Admin dashboard analytics
+  - name: upload
+    description: Media upload operations
+  - name: payments
+    description: Payment operations
+
 paths:
   /healthz:
     get:
@@ -24,13 +39,989 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ── Categories ───────────────────────────────────────────────────────────────
+  /categories:
+    get:
+      operationId: listCategories
+      tags: [categories]
+      summary: List all categories
+      responses:
+        "200":
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+    post:
+      operationId: createCategory
+      tags: [categories]
+      summary: Create a new category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryInput"
+      responses:
+        "201":
+          description: Category created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+
+  /categories/{id}:
+    patch:
+      operationId: updateCategory
+      tags: [categories]
+      summary: Update a category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryUpdate"
+      responses:
+        "200":
+          description: Category updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteCategory
+      tags: [categories]
+      summary: Delete a category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ── Menu Items ────────────────────────────────────────────────────────────────
+  /menu-items:
+    get:
+      operationId: listMenuItems
+      tags: [menu-items]
+      summary: List menu items
+      parameters:
+        - name: categoryId
+          in: query
+          schema:
+            type: ["integer", "null"]
+        - name: search
+          in: query
+          schema:
+            type: ["string", "null"]
+        - name: isVeg
+          in: query
+          schema:
+            type: ["boolean", "null"]
+        - name: isAvailable
+          in: query
+          schema:
+            type: ["boolean", "null"]
+      responses:
+        "200":
+          description: List of menu items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MenuItem"
+    post:
+      operationId: createMenuItem
+      tags: [menu-items]
+      summary: Create a menu item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MenuItemInput"
+      responses:
+        "201":
+          description: Menu item created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MenuItem"
+
+  /menu-items/{id}:
+    get:
+      operationId: getMenuItem
+      tags: [menu-items]
+      summary: Get a menu item by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Menu item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MenuItem"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateMenuItem
+      tags: [menu-items]
+      summary: Update a menu item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MenuItemUpdate"
+      responses:
+        "200":
+          description: Updated menu item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MenuItem"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteMenuItem
+      tags: [menu-items]
+      summary: Delete a menu item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ── Tables ────────────────────────────────────────────────────────────────────
+  /tables:
+    get:
+      operationId: listTables
+      tags: [tables]
+      summary: List all tables
+      responses:
+        "200":
+          description: List of tables
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Table"
+    post:
+      operationId: createTable
+      tags: [tables]
+      summary: Create a table
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TableInput"
+      responses:
+        "201":
+          description: Table created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Table"
+
+  /tables/{id}:
+    get:
+      operationId: getTable
+      tags: [tables]
+      summary: Get a table by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Table
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Table"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateTable
+      tags: [tables]
+      summary: Update a table
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TableUpdate"
+      responses:
+        "200":
+          description: Updated table
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Table"
+    delete:
+      operationId: deleteTable
+      tags: [tables]
+      summary: Delete a table
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ── Orders ────────────────────────────────────────────────────────────────────
+  /orders:
+    get:
+      operationId: listOrders
+      tags: [orders]
+      summary: List orders
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: ["string", "null"]
+            enum: [pending, accepted, preparing, ready, delivered, null]
+        - name: tableId
+          in: query
+          schema:
+            type: ["integer", "null"]
+        - name: date
+          in: query
+          schema:
+            type: ["string", "null"]
+      responses:
+        "200":
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+    post:
+      operationId: createOrder
+      tags: [orders]
+      summary: Place a new order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderInput"
+      responses:
+        "201":
+          description: Order placed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+
+  /orders/{id}:
+    get:
+      operationId: getOrder
+      tags: [orders]
+      summary: Get an order by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Order with items
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /orders/{id}/status:
+    patch:
+      operationId: updateOrderStatus
+      tags: [orders]
+      summary: Update order status (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderStatusUpdate"
+      responses:
+        "200":
+          description: Order status updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /orders/table/{tableId}/active:
+    get:
+      operationId: getActiveOrdersForTable
+      tags: [orders]
+      summary: Get active orders for a table
+      parameters:
+        - name: tableId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Active orders for table
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+
+  # ── Dashboard ─────────────────────────────────────────────────────────────────
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get admin dashboard summary
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /dashboard/best-sellers:
+    get:
+      operationId: getBestSellers
+      tags: [dashboard]
+      summary: Get top-selling menu items
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: ["integer", "null"]
+      responses:
+        "200":
+          description: Best-selling items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BestSeller"
+
+  /dashboard/table-performance:
+    get:
+      operationId: getTablePerformance
+      tags: [dashboard]
+      summary: Get revenue and order counts per table
+      responses:
+        "200":
+          description: Table performance metrics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TablePerformance"
+
+  /dashboard/recent-orders:
+    get:
+      operationId: getRecentOrders
+      tags: [dashboard]
+      summary: Get recent orders activity feed
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: ["integer", "null"]
+      responses:
+        "200":
+          description: Recent orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+
+  # ── Upload ────────────────────────────────────────────────────────────────────
+  /upload:
+    post:
+      operationId: uploadMedia
+      tags: [upload]
+      summary: Upload image or video to Cloudinary
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadInput"
+      responses:
+        "200":
+          description: Upload result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadResult"
+
+  # ── Payments ──────────────────────────────────────────────────────────────────
+  /payments/create-order:
+    post:
+      operationId: createPaymentOrder
+      tags: [payments]
+      summary: Create a Razorpay payment order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentOrderInput"
+      responses:
+        "200":
+          description: Razorpay order created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentOrder"
+
+  /payments/verify:
+    post:
+      operationId: verifyPayment
+      tags: [payments]
+      summary: Verify a Razorpay payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentVerifyInput"
+      responses:
+        "200":
+          description: Payment verified
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentVerifyResult"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
 
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    # ── Category ────────────────────────────────────────────────────────────────
+    Category:
+      type: object
+      required: [id, name, sortOrder, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        imageUrl:
+          type: ["string", "null"]
+        sortOrder:
+          type: integer
+        createdAt:
+          type: string
+
+    CategoryInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        imageUrl:
+          type: string
+        sortOrder:
+          type: integer
+
+    CategoryUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        imageUrl:
+          type: string
+        sortOrder:
+          type: integer
+
+    # ── MenuItem ────────────────────────────────────────────────────────────────
+    MenuItem:
+      type: object
+      required: [id, name, price, categoryId, isVeg, isAvailable, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        price:
+          type: number
+        categoryId:
+          type: integer
+        categoryName:
+          type: ["string", "null"]
+        isVeg:
+          type: boolean
+        isAvailable:
+          type: boolean
+        imageUrl:
+          type: ["string", "null"]
+        videoUrl:
+          type: ["string", "null"]
+        preparationTime:
+          type: ["integer", "null"]
+        spiceLevel:
+          type: ["string", "null"]
+          enum: [mild, medium, spicy, null]
+        tags:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    MenuItemInput:
+      type: object
+      required: [name, price, categoryId, isVeg]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        price:
+          type: number
+          minimum: 0
+        categoryId:
+          type: integer
+        isVeg:
+          type: boolean
+        isAvailable:
+          type: boolean
+        imageUrl:
+          type: string
+        videoUrl:
+          type: string
+        preparationTime:
+          type: integer
+        spiceLevel:
+          type: string
+          enum: [mild, medium, spicy]
+        tags:
+          type: string
+
+    MenuItemUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        price:
+          type: number
+          minimum: 0
+        categoryId:
+          type: integer
+        isVeg:
+          type: boolean
+        isAvailable:
+          type: boolean
+        imageUrl:
+          type: string
+        videoUrl:
+          type: string
+        preparationTime:
+          type: integer
+        spiceLevel:
+          type: string
+          enum: [mild, medium, spicy]
+        tags:
+          type: string
+
+    # ── Table ───────────────────────────────────────────────────────────────────
+    Table:
+      type: object
+      required: [id, tableNumber, capacity, isActive, qrCode, createdAt]
+      properties:
+        id:
+          type: integer
+        tableNumber:
+          type: integer
+        name:
+          type: ["string", "null"]
+        capacity:
+          type: integer
+        isActive:
+          type: boolean
+        qrCode:
+          type: string
+        createdAt:
+          type: string
+
+    TableInput:
+      type: object
+      required: [tableNumber]
+      properties:
+        tableNumber:
+          type: integer
+          minimum: 1
+        name:
+          type: string
+        capacity:
+          type: integer
+          minimum: 1
+        isActive:
+          type: boolean
+
+    TableUpdate:
+      type: object
+      properties:
+        tableNumber:
+          type: integer
+          minimum: 1
+        name:
+          type: string
+        capacity:
+          type: integer
+          minimum: 1
+        isActive:
+          type: boolean
+
+    # ── Order ───────────────────────────────────────────────────────────────────
+    OrderItem:
+      type: object
+      required: [id, menuItemId, menuItemName, quantity, unitPrice, totalPrice]
+      properties:
+        id:
+          type: integer
+        menuItemId:
+          type: integer
+        menuItemName:
+          type: string
+        menuItemImageUrl:
+          type: ["string", "null"]
+        quantity:
+          type: integer
+        unitPrice:
+          type: number
+        totalPrice:
+          type: number
+        notes:
+          type: ["string", "null"]
+
+    Order:
+      type: object
+      required: [id, tableId, tableNumber, status, totalAmount, paymentMethod, createdAt]
+      properties:
+        id:
+          type: integer
+        tableId:
+          type: integer
+        tableNumber:
+          type: integer
+        status:
+          type: string
+          enum: [pending, accepted, preparing, ready, delivered]
+        totalAmount:
+          type: number
+        paymentMethod:
+          type: string
+          enum: [razorpay, cash]
+        paymentStatus:
+          type: string
+          enum: [pending, paid, failed]
+        razorpayOrderId:
+          type: ["string", "null"]
+        razorpayPaymentId:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        customerName:
+          type: ["string", "null"]
+        customerPhone:
+          type: ["string", "null"]
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderItem"
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    OrderItemInput:
+      type: object
+      required: [menuItemId, quantity]
+      properties:
+        menuItemId:
+          type: integer
+        quantity:
+          type: integer
+          minimum: 1
+        notes:
+          type: string
+
+    OrderInput:
+      type: object
+      required: [tableId, items, paymentMethod]
+      properties:
+        tableId:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderItemInput"
+        paymentMethod:
+          type: string
+          enum: [razorpay, cash]
+        notes:
+          type: string
+        customerName:
+          type: string
+        customerPhone:
+          type: string
+
+    OrderStatusUpdate:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [pending, accepted, preparing, ready, delivered]
+
+    # ── Dashboard ───────────────────────────────────────────────────────────────
+    DashboardSummary:
+      type: object
+      required: [totalOrders, totalRevenue, pendingOrders, activeOrders, todayOrders, todayRevenue, totalTables, totalMenuItems]
+      properties:
+        totalOrders:
+          type: integer
+        totalRevenue:
+          type: number
+        pendingOrders:
+          type: integer
+        activeOrders:
+          type: integer
+        todayOrders:
+          type: integer
+        todayRevenue:
+          type: number
+        totalTables:
+          type: integer
+        totalMenuItems:
+          type: integer
+
+    BestSeller:
+      type: object
+      required: [menuItemId, menuItemName, totalQuantity, totalRevenue, orderCount]
+      properties:
+        menuItemId:
+          type: integer
+        menuItemName:
+          type: string
+        imageUrl:
+          type: ["string", "null"]
+        isVeg:
+          type: boolean
+        totalQuantity:
+          type: integer
+        totalRevenue:
+          type: number
+        orderCount:
+          type: integer
+
+    TablePerformance:
+      type: object
+      required: [tableId, tableNumber, totalOrders, totalRevenue]
+      properties:
+        tableId:
+          type: integer
+        tableNumber:
+          type: integer
+        tableName:
+          type: ["string", "null"]
+        totalOrders:
+          type: integer
+        totalRevenue:
+          type: number
+        averageOrderValue:
+          type: number
+
+    # ── Upload ──────────────────────────────────────────────────────────────────
+    UploadInput:
+      type: object
+      required: [data, resourceType]
+      properties:
+        data:
+          type: string
+          description: Base64-encoded file data or a URL to upload
+        resourceType:
+          type: string
+          enum: [image, video]
+        folder:
+          type: string
+
+    UploadResult:
+      type: object
+      required: [url, publicId, resourceType]
+      properties:
+        url:
+          type: string
+        publicId:
+          type: string
+        resourceType:
+          type: string
+        width:
+          type: ["integer", "null"]
+        height:
+          type: ["integer", "null"]
+        format:
+          type: ["string", "null"]
+
+    # ── Payments ────────────────────────────────────────────────────────────────
+    PaymentOrderInput:
+      type: object
+      required: [amount, currency, orderId]
+      properties:
+        amount:
+          type: number
+          description: Amount in rupees
+        currency:
+          type: string
+          default: INR
+        orderId:
+          type: integer
+          description: Our internal order ID
+
+    PaymentOrder:
+      type: object
+      required: [razorpayOrderId, amount, currency, keyId]
+      properties:
+        razorpayOrderId:
+          type: string
+        amount:
+          type: integer
+          description: Amount in paise
+        currency:
+          type: string
+        keyId:
+          type: string
+
+    PaymentVerifyInput:
+      type: object
+      required: [razorpayOrderId, razorpayPaymentId, razorpaySignature, orderId]
+      properties:
+        razorpayOrderId:
+          type: string
+        razorpayPaymentId:
+          type: string
+        razorpaySignature:
+          type: string
+        orderId:
+          type: integer
+
+    PaymentVerifyResult:
+      type: object
+      required: [success]
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
