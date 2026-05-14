@@ -6,10 +6,15 @@ import { db, ordersTable } from "@workspace/db";
 import { CreatePaymentOrderBody, VerifyPaymentBody } from "@workspace/api-zod";
 import { logger } from "../lib/logger";
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID!,
-  key_secret: process.env.RAZORPAY_KEY_SECRET!,
-});
+function getRazorpay() {
+  if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+    throw new Error("Razorpay credentials not configured");
+  }
+  return new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  });
+}
 
 const router: IRouter = Router();
 
@@ -23,6 +28,7 @@ router.post("/payments/create-order", async (req, res): Promise<void> => {
   const { amount, currency, orderId } = parsed.data;
 
   try {
+    const razorpay = getRazorpay();
     const razorpayOrder = await razorpay.orders.create({
       amount: Math.round(amount * 100), // paise
       currency: currency ?? "INR",

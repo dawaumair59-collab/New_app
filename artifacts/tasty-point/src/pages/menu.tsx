@@ -3,7 +3,9 @@ import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, ShoppingCart, X, ChevronRight } from "lucide-react";
 import { useListMenuItems, useListCategories } from "@workspace/api-client-react";
+import type { MenuItem } from "@workspace/api-client-react";
 import { FoodCard } from "@/components/FoodCard";
+import { ItemDetailModal } from "@/components/ItemDetailModal";
 import { useCart, loadTableId, saveTableId } from "@/lib/cart-store";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -13,6 +15,7 @@ export default function MenuPage() {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [vegFilter, setVegFilter] = useState<boolean | null>(null);
   const [tableId, setTableId] = useState<number | null>(null);
+  const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
 
   const { items: cartItems, total, count } = useCart();
 
@@ -135,11 +138,14 @@ export default function MenuPage() {
         ) : (
           <div className="grid grid-cols-2 gap-3">
             {menuItems.map((item, i) => (
-              <FoodCard key={item.id} item={item} index={i} />
+              <FoodCard key={item.id} item={item} index={i} onClick={() => setSelectedItem(item)} />
             ))}
           </div>
         )}
       </div>
+
+      {/* Item Detail Modal */}
+      <ItemDetailModal item={selectedItem} onClose={() => setSelectedItem(null)} />
 
       {/* Sticky Cart Button */}
       <AnimatePresence>

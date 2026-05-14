@@ -20,6 +20,7 @@ type SpiceLevel = "mild" | "medium" | "spicy";
 function ImageUploadField({ value, onChange, label }: { value: string; onChange: (url: string) => void; label: string }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const uploadMedia = useUploadMedia();
+  const isVideo = value && (value.includes("/video/") || value.match(/\.(mp4|webm|mov|avi)(\?|$)/i));
 
   const handleFile = async (file: File) => {
     const reader = new FileReader();
@@ -38,24 +39,46 @@ function ImageUploadField({ value, onChange, label }: { value: string; onChange:
   return (
     <div>
       <label className="text-xs font-medium text-gray-600 mb-1 block">{label}</label>
-      <div className="flex gap-2">
+      <div className="flex gap-2 mb-2">
         <input
           type="text"
           value={value}
           onChange={e => onChange(e.target.value)}
-          placeholder="URL or upload"
+          placeholder="Paste URL or click upload"
           className="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20"
         />
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={uploadMedia.isPending}
-          className="flex items-center gap-1 px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+          className="flex items-center gap-1 px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 whitespace-nowrap"
         >
           {uploadMedia.isPending ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+          {uploadMedia.isPending ? "Uploading..." : "Upload"}
         </button>
         <input ref={inputRef} type="file" accept="image/*,video/*" className="hidden" onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
       </div>
+      {value && (
+        <div className="relative rounded-xl overflow-hidden border border-gray-100 bg-gray-50">
+          {isVideo ? (
+            <video src={value} className="w-full h-32 object-cover" muted playsInline />
+          ) : (
+            <img
+              src={value}
+              alt="preview"
+              className="w-full h-32 object-cover"
+              onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+            />
+          )}
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            className="absolute top-1.5 right-1.5 w-6 h-6 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70 transition-colors"
+          >
+            <X size={12} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
