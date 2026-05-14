@@ -98,8 +98,7 @@ export function MediaUploader({ label, accept, value, onChange }: MediaUploaderP
       <input
         ref={inputRef}
         type="file"
-        accept={acceptAttr}
-        capture={isImage ? "environment" : undefined}
+        accept={isImage ? "image/*" : "video/*"}
         className="hidden"
         onChange={handleFileInput}
       />
