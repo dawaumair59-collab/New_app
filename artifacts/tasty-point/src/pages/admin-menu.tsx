@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Pencil, Trash2, X, Image } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Image, Sparkles } from "lucide-react";
 import {
   useListCategories, useCreateCategory, useDeleteCategory,
   useListMenuItems, useCreateMenuItem, useUpdateMenuItem, useDeleteMenuItem,
@@ -16,6 +16,12 @@ import { useToast } from "@/hooks/use-toast";
 import type { MenuItem } from "@workspace/api-client-react";
 
 type SpiceLevel = "mild" | "medium" | "spicy";
+
+const DEFAULT_CATEGORIES = [
+  "Starters", "Main Course", "Breads", "Rice & Biryani",
+  "Fast Food", "Snacks", "Desserts", "Beverages",
+  "Chinese", "South Indian", "North Indian", "Seafood",
+];
 
 const EMPTY_FORM = { name: "", description: "", price: "", categoryId: "", isVeg: true, isAvailable: true, imageUrl: "", videoUrl: "", preparationTime: "", spiceLevel: "" as SpiceLevel | "", tags: "" };
 
@@ -97,6 +103,23 @@ export default function AdminMenu() {
     await deleteCategory.mutateAsync({ id });
     queryClient.invalidateQueries({ queryKey: getListCategoriesQueryKey() });
     toast({ title: "Category deleted" });
+  };
+
+  const [addingDefaults, setAddingDefaults] = useState(false);
+  const handleAddDefaults = async () => {
+    const existing = new Set(categories.map(c => c.name.toLowerCase().trim()));
+    const toAdd = DEFAULT_CATEGORIES.filter(n => !existing.has(n.toLowerCase()));
+    if (toAdd.length === 0) { toast({ title: "Sab categories pehle se hain!" }); return; }
+    setAddingDefaults(true);
+    try {
+      for (const name of toAdd) {
+        await createCategory.mutateAsync({ data: { name } });
+      }
+      queryClient.invalidateQueries({ queryKey: getListCategoriesQueryKey() });
+      toast({ title: `${toAdd.length} default categories add ho gayi!` });
+    } finally {
+      setAddingDefaults(false);
+    }
   };
 
   return (
@@ -253,6 +276,44 @@ export default function AdminMenu() {
         ) : (
           /* Categories Tab */
           <div className="space-y-4">
+            {/* Default categories quick-add */}
+            {categories.length === 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-amber-50 border border-amber-200 rounded-2xl p-4"
+              >
+                <p className="text-sm font-semibold text-amber-800 mb-1">Koi category nahi hai</p>
+                <p className="text-xs text-amber-600 mb-3">
+                  Ek click mein 12 common restaurant categories add karo — Starters, Main Course, Fast Food, Desserts aur aur bhi.
+                </p>
+                <button
+                  onClick={handleAddDefaults}
+                  disabled={addingDefaults}
+                  className="flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors disabled:opacity-60"
+                >
+                  <Sparkles size={14} />
+                  {addingDefaults ? "Adding..." : "Add Default Categories"}
+                </button>
+                <p className="text-[11px] text-amber-500 mt-2">
+                  Starters · Main Course · Breads · Rice &amp; Biryani · Fast Food · Snacks · Desserts · Beverages · Chinese · South Indian · North Indian · Seafood
+                </p>
+              </motion.div>
+            )}
+
+            {categories.length > 0 && (
+              <div className="flex justify-end">
+                <button
+                  onClick={handleAddDefaults}
+                  disabled={addingDefaults}
+                  className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-primary border border-gray-200 hover:border-primary/40 px-3 py-1.5 rounded-full transition-colors disabled:opacity-60"
+                >
+                  <Sparkles size={11} />
+                  {addingDefaults ? "Adding..." : "Add Default Categories"}
+                </button>
+              </div>
+            )}
+
             <form onSubmit={handleCreateCat} className="flex gap-3">
               <input
                 value={catName} onChange={e => setCatName(e.target.value)} placeholder="New category name"
