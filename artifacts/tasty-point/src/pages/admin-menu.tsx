@@ -171,10 +171,24 @@ export default function AdminMenu() {
                     </div>
                     <div>
                       <label className="text-xs font-medium text-gray-600 mb-1 block">Category *</label>
-                      <select required value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 bg-white" data-testid="item-category">
-                        <option value="">Select</option>
-                        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                      </select>
+                      {categories.length === 0 ? (
+                        <div className="w-full px-3 py-2 border border-amber-300 bg-amber-50 rounded-xl text-xs text-amber-700">
+                          <p className="font-semibold mb-1">Pehle categories add karo</p>
+                          <button
+                            type="button"
+                            onClick={handleAddDefaults}
+                            disabled={addingDefaults}
+                            className="underline font-bold text-amber-800 disabled:opacity-60"
+                          >
+                            {addingDefaults ? "Adding..." : "👉 Default categories add karo"}
+                          </button>
+                        </div>
+                      ) : (
+                        <select required value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 bg-white" data-testid="item-category">
+                          <option value="">-- Select Category --</option>
+                          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                        </select>
+                      )}
                     </div>
                   </div>
                   <div className="grid grid-cols-3 gap-3">
