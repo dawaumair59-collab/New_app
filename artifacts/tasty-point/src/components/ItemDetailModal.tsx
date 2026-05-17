@@ -101,8 +101,11 @@ export function ItemDetailModal({ item, onClose, allItems = [] }: ItemDetailModa
   const savings = item.originalPrice ? item.originalPrice - item.price : 0;
 
   const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({ title: item.name, text: `Check out ${item.name} for ₹${item.price}!` });
+    if ('share' in navigator) {
+      (navigator as Navigator & { share: (data: ShareData) => Promise<void> }).share({
+        title: item.name,
+        text: `Check out ${item.name} for ₹${item.price}!`,
+      });
     }
   };
 
@@ -143,7 +146,7 @@ export function ItemDetailModal({ item, onClose, allItems = [] }: ItemDetailModa
               <button onClick={onClose} className="w-9 h-9 glass rounded-full flex items-center justify-center border border-white/20 shadow-sm" data-testid="modal-close">
                 <X size={16} className="text-white" />
               </button>
-              {navigator.share && (
+              {'share' in navigator && (
                 <button onClick={handleShare} className="w-9 h-9 glass rounded-full flex items-center justify-center border border-white/20 shadow-sm">
                   <Share2 size={15} className="text-white" />
                 </button>
