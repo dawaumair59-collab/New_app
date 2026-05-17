@@ -111,6 +111,7 @@ function CartBar({ count, total, onPress }: { count: number; total: number; onPr
       return () => clearTimeout(t);
     }
     prevCount.current = count;
+    return undefined;
   }, [count]);
 
   return (
