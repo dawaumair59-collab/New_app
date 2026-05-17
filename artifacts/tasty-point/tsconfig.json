@@ -6,6 +6,7 @@
     "noEmit": true,
     "skipLibCheck": true,
     "noImplicitAny": false,
+    "strict": false,
     "jsx": "preserve",
     "lib": ["esnext", "dom", "dom.iterable"],
     "resolveJsonModule": true,
