@@ -118,15 +118,9 @@ export function ItemDetailModal({ item, onClose }: ItemDetailModalProps) {
           onClick={e => e.stopPropagation()}
           data-testid="item-modal"
         >
-          {/* Image / Video */}
+          {/* Image always on top */}
           <div className="relative flex-shrink-0">
-            {item.videoUrl ? (
-              <div className="p-3 bg-gray-950">
-                <VideoPlayer src={item.videoUrl} />
-              </div>
-            ) : (
-              <FoodImage src={item.imageUrl} name={item.name} />
-            )}
+            <FoodImage src={item.imageUrl} name={item.name} />
 
             {/* Close button */}
             <button
@@ -175,9 +169,8 @@ export function ItemDetailModal({ item, onClose }: ItemDetailModalProps) {
               <p className="text-sm text-gray-600 leading-relaxed mb-4">{item.description}</p>
             )}
 
-            {/* Video if image was shown above */}
-            {item.videoUrl && !item.imageUrl && null}
-            {item.videoUrl && item.imageUrl && (
+            {/* Video always shown below description */}
+            {item.videoUrl && (
               <div className="mb-4">
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Watch</p>
                 <VideoPlayer src={item.videoUrl} />
