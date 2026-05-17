@@ -13,12 +13,21 @@ export interface MenuItemInput {
   description?: string;
   /** @minimum 0 */
   price: number;
+  originalPrice?: number;
   categoryId: number;
   isVeg: boolean;
   isAvailable?: boolean;
+  isBestseller?: boolean;
   imageUrl?: string;
   videoUrl?: string;
   preparationTime?: number;
   spiceLevel?: MenuItemInputSpiceLevel;
   tags?: string;
+  ingredients?: string;
+  calories?: number;
+  protein?: string;
+  carbs?: string;
+  fat?: string;
+  allergenInfo?: string;
+  pairWithIds?: string;
 }

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Pencil, Trash2, X, Image, Sparkles, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Image, Sparkles, Loader2, Star } from "lucide-react";
 import {
   useListCategories, useCreateCategory, useDeleteCategory,
   useListMenuItems, useCreateMenuItem, useUpdateMenuItem, useDeleteMenuItem,
@@ -23,7 +23,29 @@ const DEFAULT_CATEGORIES = [
   "Chinese", "South Indian", "North Indian", "Seafood",
 ];
 
-const EMPTY_FORM = { name: "", description: "", price: "", categoryId: "", isVeg: true, isAvailable: true, imageUrl: "", videoUrl: "", preparationTime: "", spiceLevel: "" as SpiceLevel | "", tags: "" };
+const EMPTY_FORM = {
+  name: "", description: "", price: "", originalPrice: "", categoryId: "",
+  isVeg: true, isAvailable: true, isBestseller: false,
+  imageUrl: "", videoUrl: "",
+  preparationTime: "", spiceLevel: "" as SpiceLevel | "", tags: "",
+  ingredients: "", calories: "", protein: "", carbs: "", fat: "",
+  allergenInfo: "", pairWithIds: [] as number[],
+};
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 mt-1">{children}</p>;
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="text-xs font-medium text-gray-600 mb-1 block">{label}</label>
+      {children}
+    </div>
+  );
+}
+
+const inputCls = "w-full px-3 py-2 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 bg-white";
 
 export default function AdminMenu() {
   const [tab, setTab] = useState<"items" | "categories">("items");
@@ -51,10 +73,16 @@ export default function AdminMenu() {
     setEditItem(item);
     setForm({
       name: item.name, description: item.description ?? "", price: String(item.price),
+      originalPrice: item.originalPrice ? String(item.originalPrice) : "",
       categoryId: String(item.categoryId), isVeg: item.isVeg, isAvailable: item.isAvailable,
+      isBestseller: item.isBestseller ?? false,
       imageUrl: item.imageUrl ?? "", videoUrl: item.videoUrl ?? "",
       preparationTime: item.preparationTime ? String(item.preparationTime) : "",
       spiceLevel: (item.spiceLevel as SpiceLevel) ?? "", tags: item.tags ?? "",
+      ingredients: item.ingredients ?? "", calories: item.calories ? String(item.calories) : "",
+      protein: item.protein ?? "", carbs: item.carbs ?? "", fat: item.fat ?? "",
+      allergenInfo: item.allergenInfo ?? "",
+      pairWithIds: item.pairWithIds ? item.pairWithIds.split(",").map(Number).filter(Boolean) : [],
     });
     setShowForm(true);
   };
@@ -62,11 +90,26 @@ export default function AdminMenu() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const data = {
-      name: form.name, description: form.description || undefined, price: Number(form.price),
-      categoryId: Number(form.categoryId), isVeg: form.isVeg, isAvailable: form.isAvailable,
-      imageUrl: form.imageUrl || undefined, videoUrl: form.videoUrl || undefined,
+      name: form.name,
+      description: form.description || undefined,
+      price: Number(form.price),
+      originalPrice: form.originalPrice ? Number(form.originalPrice) : undefined,
+      categoryId: Number(form.categoryId),
+      isVeg: form.isVeg,
+      isAvailable: form.isAvailable,
+      isBestseller: form.isBestseller,
+      imageUrl: form.imageUrl || undefined,
+      videoUrl: form.videoUrl || undefined,
       preparationTime: form.preparationTime ? Number(form.preparationTime) : undefined,
-      spiceLevel: (form.spiceLevel as SpiceLevel) || undefined, tags: form.tags || undefined,
+      spiceLevel: (form.spiceLevel as SpiceLevel) || undefined,
+      tags: form.tags || undefined,
+      ingredients: form.ingredients || undefined,
+      calories: form.calories ? Number(form.calories) : undefined,
+      protein: form.protein || undefined,
+      carbs: form.carbs || undefined,
+      fat: form.fat || undefined,
+      allergenInfo: form.allergenInfo || undefined,
+      pairWithIds: form.pairWithIds.length > 0 ? form.pairWithIds.join(",") : undefined,
     };
     try {
       if (editItem) {
@@ -79,7 +122,7 @@ export default function AdminMenu() {
       queryClient.invalidateQueries({ queryKey: getListMenuItemsQueryKey({}) });
       setShowForm(false);
     } catch {
-      toast({ title: "Save failed", variant: "destructive" });
+      toast({ title: "Error saving item", variant: "destructive" });
     }
   };
 
@@ -122,6 +165,15 @@ export default function AdminMenu() {
     }
   };
 
+  const togglePairItem = (id: number) => {
+    setForm(f => ({
+      ...f,
+      pairWithIds: f.pairWithIds.includes(id)
+        ? f.pairWithIds.filter(x => x !== id)
+        : [...f.pairWithIds, id],
+    }));
+  };
+
   return (
     <AdminLayout>
       <div className="p-6 max-w-7xl mx-auto">
@@ -156,73 +208,135 @@ export default function AdminMenu() {
                   <button onClick={() => setShowForm(false)} className="p-1 hover:bg-gray-100 rounded-full"><X size={18} /></button>
                 </div>
                 <form onSubmit={handleSubmit} className="p-5 space-y-4">
-                  <div>
-                    <label className="text-xs font-medium text-gray-600 mb-1 block">Name *</label>
-                    <input required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20" data-testid="item-name" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-gray-600 mb-1 block">Description</label>
-                    <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={2} className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
-                  </div>
+
+                  {/* ── BASIC INFO ── */}
+                  <SectionLabel>Basic Info</SectionLabel>
+                  <Field label="Item Name *">
+                    <input required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className={inputCls} data-testid="item-name" placeholder="e.g. Classic Burger" />
+                  </Field>
+                  <Field label="Description">
+                    <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={2} className={`${inputCls} resize-none`} placeholder="Short description of the dish..." />
+                  </Field>
+
                   <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs font-medium text-gray-600 mb-1 block">Price (₹) *</label>
-                      <input required type="number" min={0} step="0.01" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20" data-testid="item-price" />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-gray-600 mb-1 block">Category *</label>
-                      {categories.length === 0 ? (
-                        <div className="w-full px-3 py-2 border border-amber-300 bg-amber-50 rounded-xl text-xs text-amber-700">
-                          <p className="font-semibold mb-1">Pehle categories add karo</p>
-                          <button
-                            type="button"
-                            onClick={handleAddDefaults}
-                            disabled={addingDefaults}
-                            className="underline font-bold text-amber-800 disabled:opacity-60"
-                          >
-                            {addingDefaults ? "Adding..." : "👉 Default categories add karo"}
-                          </button>
-                        </div>
-                      ) : (
-                        <select required value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 bg-white" data-testid="item-category">
-                          <option value="">-- Select Category --</option>
-                          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                        </select>
-                      )}
-                    </div>
+                    <Field label="Price (₹) *">
+                      <input required type="number" min={0} step="0.01" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} className={inputCls} data-testid="item-price" placeholder="150" />
+                    </Field>
+                    <Field label="Original Price (₹)">
+                      <input type="number" min={0} step="0.01" value={form.originalPrice} onChange={e => setForm(f => ({ ...f, originalPrice: e.target.value }))} className={inputCls} placeholder="200 (for strikethrough)" />
+                    </Field>
                   </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <label className="text-xs font-medium text-gray-600 mb-1 block">Spice Level</label>
-                      <select value={form.spiceLevel} onChange={e => setForm(f => ({ ...f, spiceLevel: e.target.value as SpiceLevel | "" }))} className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm outline-none bg-white">
-                        <option value="">None</option>
-                        <option value="mild">Mild</option>
-                        <option value="medium">Medium</option>
-                        <option value="spicy">Spicy</option>
+
+                  <Field label="Category *">
+                    {categories.length === 0 ? (
+                      <div className="w-full px-3 py-2 border border-amber-300 bg-amber-50 rounded-xl text-xs text-amber-700">
+                        <p className="font-semibold mb-1">Pehle categories add karo</p>
+                        <button type="button" onClick={handleAddDefaults} disabled={addingDefaults} className="underline font-bold text-amber-800 disabled:opacity-60">
+                          {addingDefaults ? "Adding..." : "👉 Default categories add karo"}
+                        </button>
+                      </div>
+                    ) : (
+                      <select required value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))} className={inputCls} data-testid="item-category">
+                        <option value="">-- Select Category --</option>
+                        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                       </select>
-                    </div>
+                    )}
+                  </Field>
+
+                  {/* ── OPTIONS ── */}
+                  <SectionLabel>Options</SectionLabel>
+                  <div className="grid grid-cols-3 gap-3">
+                    <Field label="Spice Level">
+                      <select value={form.spiceLevel} onChange={e => setForm(f => ({ ...f, spiceLevel: e.target.value as SpiceLevel | "" }))} className={inputCls}>
+                        <option value="">None</option>
+                        <option value="mild">Mild 🌶</option>
+                        <option value="medium">Medium 🌶🌶</option>
+                        <option value="spicy">Spicy 🌶🌶🌶</option>
+                      </select>
+                    </Field>
+                    <Field label="Prep Time (min)">
+                      <input type="number" min={1} value={form.preparationTime} onChange={e => setForm(f => ({ ...f, preparationTime: e.target.value }))} className={inputCls} placeholder="15" />
+                    </Field>
                     <div>
-                      <label className="text-xs font-medium text-gray-600 mb-1 block">Prep Time (min)</label>
-                      <input type="number" min={1} value={form.preparationTime} onChange={e => setForm(f => ({ ...f, preparationTime: e.target.value }))} className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20" />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-medium text-gray-600 block">Options</label>
-                      <label className="flex items-center gap-2 text-sm cursor-pointer">
-                        <input type="checkbox" checked={form.isVeg} onChange={e => setForm(f => ({ ...f, isVeg: e.target.checked }))} className="accent-green-600" />
-                        <span className="text-gray-700">Veg</span>
-                      </label>
-                      <label className="flex items-center gap-2 text-sm cursor-pointer">
-                        <input type="checkbox" checked={form.isAvailable} onChange={e => setForm(f => ({ ...f, isAvailable: e.target.checked }))} className="accent-primary" />
-                        <span className="text-gray-700">Available</span>
-                      </label>
+                      <label className="text-xs font-medium text-gray-600 block mb-2">Toggles</label>
+                      <div className="space-y-1.5">
+                        {[
+                          { label: "🥦 Veg", key: "isVeg" as const, color: "accent-green-600" },
+                          { label: "✅ Available", key: "isAvailable" as const, color: "accent-primary" },
+                          { label: "🔥 Bestseller", key: "isBestseller" as const, color: "accent-yellow-500" },
+                        ].map(({ label, key, color }) => (
+                          <label key={key} className="flex items-center gap-2 text-xs cursor-pointer">
+                            <input type="checkbox" checked={form[key]} onChange={e => setForm(f => ({ ...f, [key]: e.target.checked }))} className={color} />
+                            <span className="text-gray-700">{label}</span>
+                          </label>
+                        ))}
+                      </div>
                     </div>
                   </div>
+
+                  <Field label="Tags (comma-separated)">
+                    <input value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))} placeholder="popular, bestseller, spicy" className={inputCls} />
+                  </Field>
+
+                  {/* ── MEDIA ── */}
+                  <SectionLabel>Media</SectionLabel>
                   <MediaUploader label="Food Photo" accept="image" value={form.imageUrl} onChange={url => setForm(f => ({ ...f, imageUrl: url }))} />
                   <MediaUploader label="Video Preview (optional)" accept="video" value={form.videoUrl} onChange={url => setForm(f => ({ ...f, videoUrl: url }))} />
-                  <div>
-                    <label className="text-xs font-medium text-gray-600 mb-1 block">Tags (comma-separated)</label>
-                    <input value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))} placeholder="popular, bestseller, spicy" className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20" />
+
+                  {/* ── NUTRITION ── */}
+                  <SectionLabel>Nutrition Info (Optional)</SectionLabel>
+                  <Field label="Ingredients (comma-separated with emoji)">
+                    <input value={form.ingredients} onChange={e => setForm(f => ({ ...f, ingredients: e.target.value }))} placeholder="🥩 Beef, 🧀 Cheddar, 🥬 Lettuce" className={inputCls} />
+                  </Field>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[
+                      { label: "Calories", key: "calories" as const, placeholder: "520", unit: "kcal" },
+                      { label: "Protein", key: "protein" as const, placeholder: "28g" },
+                      { label: "Carbs", key: "carbs" as const, placeholder: "38g" },
+                      { label: "Fat", key: "fat" as const, placeholder: "24g" },
+                    ].map(({ label, key, placeholder }) => (
+                      <Field key={key} label={label}>
+                        <input
+                          value={form[key]}
+                          onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+                          placeholder={placeholder}
+                          className={inputCls}
+                          type={key === "calories" ? "number" : "text"}
+                        />
+                      </Field>
+                    ))}
                   </div>
+                  <Field label="Allergen Info">
+                    <input value={form.allergenInfo} onChange={e => setForm(f => ({ ...f, allergenInfo: e.target.value }))} placeholder="Gluten, Dairy, Soy" className={inputCls} />
+                  </Field>
+
+                  {/* ── PAIR IT WITH ── */}
+                  {menuItems.filter(m => !editItem || m.id !== editItem.id).length > 0 && (
+                    <>
+                      <SectionLabel>Pair It With (Upsell Items)</SectionLabel>
+                      <div className="flex flex-wrap gap-2">
+                        {menuItems
+                          .filter(m => !editItem || m.id !== editItem.id)
+                          .map(m => (
+                            <button
+                              key={m.id}
+                              type="button"
+                              onClick={() => togglePairItem(m.id)}
+                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                                form.pairWithIds.includes(m.id)
+                                  ? "bg-primary text-white border-primary"
+                                  : "bg-gray-50 text-gray-700 border-gray-200 hover:border-primary/40"
+                              }`}
+                            >
+                              {form.pairWithIds.includes(m.id) && <span>✓</span>}
+                              {m.name}
+                              <span className="opacity-60">₹{m.price}</span>
+                            </button>
+                          ))}
+                      </div>
+                    </>
+                  )}
+
                   <div className="flex gap-2 pt-2">
                     <button type="submit" disabled={createMenuItem.isPending || updateMenuItem.isPending} className="flex-1 bg-primary text-white py-2.5 rounded-xl font-semibold text-sm disabled:opacity-60 flex items-center justify-center gap-2" data-testid="save-item-btn">
                       {(createMenuItem.isPending || updateMenuItem.isPending) && <Loader2 size={14} className="animate-spin" />}
@@ -249,36 +363,38 @@ export default function AdminMenu() {
             {/* Items Table */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               {itemsLoading ? (
-                <div className="p-5 space-y-3">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)}</div>
+                <div className="p-4 space-y-3">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)}</div>
               ) : menuItems.length === 0 ? (
                 <div className="p-12 text-center">
                   <Image size={40} className="text-gray-200 mx-auto mb-3" />
                   <p className="text-gray-500 font-medium">No items yet</p>
-                  <p className="text-sm text-gray-400">Click "Add Item" to get started</p>
+                  <p className="text-gray-400 text-sm">Click "Add Item" to get started</p>
                 </div>
               ) : (
                 <div className="divide-y divide-gray-50">
                   {menuItems.map(item => (
-                    <div key={item.id} className="flex items-center gap-4 px-5 py-3 hover:bg-gray-50 transition-colors" data-testid={`menu-item-${item.id}`}>
+                    <div key={item.id} className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors">
                       {item.imageUrl ? (
                         <img src={item.imageUrl} alt={item.name} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
                       ) : (
-                        <div className="w-12 h-12 rounded-xl bg-red-50 flex-shrink-0 flex items-center justify-center"><Image size={18} className="text-red-200" /></div>
+                        <div className="w-12 h-12 rounded-xl bg-red-50 flex-shrink-0" />
                       )}
-                      <VegBadge isVeg={item.isVeg} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className="font-medium text-gray-900 text-sm">{item.name}</p>
-                          {!item.isAvailable && <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">Unavailable</span>}
+                          <VegBadge isVeg={item.isVeg} />
+                          <span className="font-semibold text-gray-900 text-sm truncate">{item.name}</span>
+                          {item.isBestseller && <span className="text-[10px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-full font-bold">🔥 Best</span>}
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-xs text-gray-400">{item.categoryName}</span>
+                          <span className="text-sm font-bold text-primary">₹{item.price}</span>
+                          {item.originalPrice && <span className="text-xs text-gray-400 line-through">₹{item.originalPrice}</span>}
                           <SpiceBadge level={item.spiceLevel} />
+                          <span className="text-xs text-gray-400">{item.categoryName}</span>
                         </div>
                       </div>
-                      <p className="font-bold text-gray-900 text-sm">₹{item.price}</p>
+                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${item.isAvailable ? "bg-green-400" : "bg-gray-300"}`} />
                       <div className="flex items-center gap-1">
-                        <button onClick={() => openEdit(item)} className="p-1.5 hover:bg-blue-50 text-blue-500 rounded-lg transition-colors" data-testid={`edit-item-${item.id}`}><Pencil size={14} /></button>
+                        <button onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 text-gray-500 rounded-lg transition-colors" data-testid={`edit-item-${item.id}`}><Pencil size={14} /></button>
                         <button onClick={() => handleDeleteItem(item.id, item.name)} className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg transition-colors" data-testid={`delete-item-${item.id}`}><Trash2 size={14} /></button>
                       </div>
                     </div>
@@ -290,53 +406,27 @@ export default function AdminMenu() {
         ) : (
           /* Categories Tab */
           <div className="space-y-4">
-            {/* Default categories quick-add */}
             {categories.length === 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-amber-50 border border-amber-200 rounded-2xl p-4"
-              >
+              <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
                 <p className="text-sm font-semibold text-amber-800 mb-1">Koi category nahi hai</p>
-                <p className="text-xs text-amber-600 mb-3">
-                  Ek click mein 12 common restaurant categories add karo — Starters, Main Course, Fast Food, Desserts aur aur bhi.
-                </p>
-                <button
-                  onClick={handleAddDefaults}
-                  disabled={addingDefaults}
-                  className="flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors disabled:opacity-60"
-                >
+                <p className="text-xs text-amber-600 mb-3">Ek click mein 12 common restaurant categories add karo.</p>
+                <button onClick={handleAddDefaults} disabled={addingDefaults} className="flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors disabled:opacity-60">
                   <Sparkles size={14} />
                   {addingDefaults ? "Adding..." : "Add Default Categories"}
                 </button>
-                <p className="text-[11px] text-amber-500 mt-2">
-                  Starters · Main Course · Breads · Rice &amp; Biryani · Fast Food · Snacks · Desserts · Beverages · Chinese · South Indian · North Indian · Seafood
-                </p>
+                <p className="text-[11px] text-amber-500 mt-2">Starters · Main Course · Breads · Rice &amp; Biryani · Fast Food · Snacks · Desserts · Beverages · Chinese · South Indian · North Indian · Seafood</p>
               </motion.div>
             )}
-
             {categories.length > 0 && (
               <div className="flex justify-end">
-                <button
-                  onClick={handleAddDefaults}
-                  disabled={addingDefaults}
-                  className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-primary border border-gray-200 hover:border-primary/40 px-3 py-1.5 rounded-full transition-colors disabled:opacity-60"
-                >
-                  <Sparkles size={11} />
-                  {addingDefaults ? "Adding..." : "Add Default Categories"}
+                <button onClick={handleAddDefaults} disabled={addingDefaults} className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-primary border border-gray-200 hover:border-primary/40 px-3 py-1.5 rounded-full transition-colors disabled:opacity-60">
+                  <Sparkles size={11} /> {addingDefaults ? "Adding..." : "Add Default Categories"}
                 </button>
               </div>
             )}
-
             <form onSubmit={handleCreateCat} className="flex gap-3">
-              <input
-                value={catName} onChange={e => setCatName(e.target.value)} placeholder="New category name"
-                className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20"
-                data-testid="cat-name-input"
-              />
-              <button type="submit" disabled={createCategory.isPending} className="bg-primary text-white px-5 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-60" data-testid="add-cat-btn">
-                Add Category
-              </button>
+              <input value={catName} onChange={e => setCatName(e.target.value)} placeholder="New category name" className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20" data-testid="cat-name-input" />
+              <button type="submit" disabled={createCategory.isPending} className="bg-primary text-white px-5 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-60" data-testid="add-cat-btn">Add Category</button>
             </form>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               {catsLoading ? (
@@ -351,9 +441,7 @@ export default function AdminMenu() {
                         <p className="font-medium text-gray-900">{cat.name}</p>
                         {cat.description && <p className="text-xs text-gray-400">{cat.description}</p>}
                       </div>
-                      <button onClick={() => handleDeleteCat(cat.id, cat.name)} className="p-1.5 hover:bg-red-50 text-red-400 rounded-lg transition-colors" data-testid={`delete-cat-${cat.id}`}>
-                        <Trash2 size={14} />
-                      </button>
+                      <button onClick={() => handleDeleteCat(cat.id, cat.name)} className="p-1.5 hover:bg-red-50 text-red-400 rounded-lg transition-colors" data-testid={`delete-cat-${cat.id}`}><Trash2 size={14} /></button>
                     </div>
                   ))}
                 </div>

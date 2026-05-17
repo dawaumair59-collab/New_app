@@ -79,6 +79,22 @@ export const ListMenuItemsQueryParams = zod.object({
   isAvailable: zod.coerce.boolean().nullish(),
 });
 
+const menuItemSpiceLevel = zod
+  .union([zod.literal("mild"), zod.literal("medium"), zod.literal("spicy"), zod.literal(null)])
+  .nullish();
+
+const menuItemNewFields = {
+  originalPrice: zod.number().nullish(),
+  isBestseller: zod.boolean(),
+  ingredients: zod.string().nullish(),
+  calories: zod.number().nullish(),
+  protein: zod.string().nullish(),
+  carbs: zod.string().nullish(),
+  fat: zod.string().nullish(),
+  allergenInfo: zod.string().nullish(),
+  pairWithIds: zod.string().nullish(),
+};
+
 export const ListMenuItemsResponseItem = zod.object({
   id: zod.number(),
   name: zod.string(),
@@ -91,16 +107,10 @@ export const ListMenuItemsResponseItem = zod.object({
   imageUrl: zod.string().nullish(),
   videoUrl: zod.string().nullish(),
   preparationTime: zod.number().nullish(),
-  spiceLevel: zod
-    .union([
-      zod.literal("mild"),
-      zod.literal("medium"),
-      zod.literal("spicy"),
-      zod.literal(null),
-    ])
-    .nullish(),
+  spiceLevel: menuItemSpiceLevel,
   tags: zod.string().nullish(),
   createdAt: zod.string(),
+  ...menuItemNewFields,
 });
 export const ListMenuItemsResponse = zod.array(ListMenuItemsResponseItem);
 
@@ -114,14 +124,23 @@ export const CreateMenuItemBody = zod.object({
   name: zod.string().min(1),
   description: zod.string().optional(),
   price: zod.number().min(createMenuItemBodyPriceMin),
+  originalPrice: zod.number().optional(),
   categoryId: zod.number(),
   isVeg: zod.boolean(),
   isAvailable: zod.boolean().optional(),
+  isBestseller: zod.boolean().optional(),
   imageUrl: zod.string().optional(),
   videoUrl: zod.string().optional(),
   preparationTime: zod.number().optional(),
   spiceLevel: zod.enum(["mild", "medium", "spicy"]).optional(),
   tags: zod.string().optional(),
+  ingredients: zod.string().optional(),
+  calories: zod.number().optional(),
+  protein: zod.string().optional(),
+  carbs: zod.string().optional(),
+  fat: zod.string().optional(),
+  allergenInfo: zod.string().optional(),
+  pairWithIds: zod.string().optional(),
 });
 
 /**
@@ -143,16 +162,10 @@ export const GetMenuItemResponse = zod.object({
   imageUrl: zod.string().nullish(),
   videoUrl: zod.string().nullish(),
   preparationTime: zod.number().nullish(),
-  spiceLevel: zod
-    .union([
-      zod.literal("mild"),
-      zod.literal("medium"),
-      zod.literal("spicy"),
-      zod.literal(null),
-    ])
-    .nullish(),
+  spiceLevel: menuItemSpiceLevel,
   tags: zod.string().nullish(),
   createdAt: zod.string(),
+  ...menuItemNewFields,
 });
 
 /**
@@ -168,14 +181,23 @@ export const UpdateMenuItemBody = zod.object({
   name: zod.string().min(1).optional(),
   description: zod.string().optional(),
   price: zod.number().min(updateMenuItemBodyPriceMin).optional(),
+  originalPrice: zod.number().optional(),
   categoryId: zod.number().optional(),
   isVeg: zod.boolean().optional(),
   isAvailable: zod.boolean().optional(),
+  isBestseller: zod.boolean().optional(),
   imageUrl: zod.string().optional(),
   videoUrl: zod.string().optional(),
   preparationTime: zod.number().optional(),
   spiceLevel: zod.enum(["mild", "medium", "spicy"]).optional(),
   tags: zod.string().optional(),
+  ingredients: zod.string().optional(),
+  calories: zod.number().optional(),
+  protein: zod.string().optional(),
+  carbs: zod.string().optional(),
+  fat: zod.string().optional(),
+  allergenInfo: zod.string().optional(),
+  pairWithIds: zod.string().optional(),
 });
 
 export const UpdateMenuItemResponse = zod.object({
@@ -190,16 +212,10 @@ export const UpdateMenuItemResponse = zod.object({
   imageUrl: zod.string().nullish(),
   videoUrl: zod.string().nullish(),
   preparationTime: zod.number().nullish(),
-  spiceLevel: zod
-    .union([
-      zod.literal("mild"),
-      zod.literal("medium"),
-      zod.literal("spicy"),
-      zod.literal(null),
-    ])
-    .nullish(),
+  spiceLevel: menuItemSpiceLevel,
   tags: zod.string().nullish(),
   createdAt: zod.string(),
+  ...menuItemNewFields,
 });
 
 /**

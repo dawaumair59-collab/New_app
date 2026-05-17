@@ -390,7 +390,7 @@ export default function MenuPage() {
       </div>
 
       {/* Item Detail Modal */}
-      <ItemDetailModal item={selectedItem} onClose={() => setSelectedItem(null)} />
+      <ItemDetailModal item={selectedItem} onClose={() => setSelectedItem(null)} allItems={menuItems} />
 
       {/* Premium Sticky Cart Bar */}
       <CartBar count={count} total={total} onPress={() => setLocation("/cart")} />

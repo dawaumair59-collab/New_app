@@ -12,6 +12,40 @@ import {
 
 const router: IRouter = Router();
 
+const selectFields = {
+  id: menuItemsTable.id,
+  name: menuItemsTable.name,
+  description: menuItemsTable.description,
+  price: menuItemsTable.price,
+  originalPrice: menuItemsTable.originalPrice,
+  categoryId: menuItemsTable.categoryId,
+  categoryName: categoriesTable.name,
+  isVeg: menuItemsTable.isVeg,
+  isAvailable: menuItemsTable.isAvailable,
+  isBestseller: menuItemsTable.isBestseller,
+  imageUrl: menuItemsTable.imageUrl,
+  videoUrl: menuItemsTable.videoUrl,
+  preparationTime: menuItemsTable.preparationTime,
+  spiceLevel: menuItemsTable.spiceLevel,
+  tags: menuItemsTable.tags,
+  ingredients: menuItemsTable.ingredients,
+  calories: menuItemsTable.calories,
+  protein: menuItemsTable.protein,
+  carbs: menuItemsTable.carbs,
+  fat: menuItemsTable.fat,
+  allergenInfo: menuItemsTable.allergenInfo,
+  pairWithIds: menuItemsTable.pairWithIds,
+  createdAt: menuItemsTable.createdAt,
+};
+
+function toItem(item: Record<string, unknown>) {
+  return {
+    ...item,
+    price: Number(item.price),
+    originalPrice: item.originalPrice != null ? Number(item.originalPrice) : null,
+  };
+}
+
 router.get("/menu-items", async (req, res): Promise<void> => {
   const query = ListMenuItemsQueryParams.safeParse(req.query);
   if (!query.success) {
@@ -28,28 +62,13 @@ router.get("/menu-items", async (req, res): Promise<void> => {
   if (search) conditions.push(ilike(menuItemsTable.name, `%${search}%`));
 
   const items = await db
-    .select({
-      id: menuItemsTable.id,
-      name: menuItemsTable.name,
-      description: menuItemsTable.description,
-      price: menuItemsTable.price,
-      categoryId: menuItemsTable.categoryId,
-      categoryName: categoriesTable.name,
-      isVeg: menuItemsTable.isVeg,
-      isAvailable: menuItemsTable.isAvailable,
-      imageUrl: menuItemsTable.imageUrl,
-      videoUrl: menuItemsTable.videoUrl,
-      preparationTime: menuItemsTable.preparationTime,
-      spiceLevel: menuItemsTable.spiceLevel,
-      tags: menuItemsTable.tags,
-      createdAt: menuItemsTable.createdAt,
-    })
+    .select(selectFields)
     .from(menuItemsTable)
     .leftJoin(categoriesTable, eq(menuItemsTable.categoryId, categoriesTable.id))
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(menuItemsTable.name);
 
-  res.json(items.map(item => ({ ...item, price: Number(item.price) })));
+  res.json(items.map(toItem));
 });
 
 router.post("/menu-items", async (req, res): Promise<void> => {
@@ -58,8 +77,12 @@ router.post("/menu-items", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const [item] = await db.insert(menuItemsTable).values({ ...parsed.data, price: String(parsed.data.price) }).returning();
-  res.status(201).json({ ...item, price: Number(item.price) });
+  const { price, originalPrice, ...rest } = parsed.data;
+  const [item] = await db
+    .insert(menuItemsTable)
+    .values({ ...rest, price: String(price), originalPrice: originalPrice != null ? String(originalPrice) : null })
+    .returning();
+  res.status(201).json(toItem(item as Record<string, unknown>));
 });
 
 router.get("/menu-items/:id", async (req, res): Promise<void> => {
@@ -69,22 +92,7 @@ router.get("/menu-items/:id", async (req, res): Promise<void> => {
     return;
   }
   const [item] = await db
-    .select({
-      id: menuItemsTable.id,
-      name: menuItemsTable.name,
-      description: menuItemsTable.description,
-      price: menuItemsTable.price,
-      categoryId: menuItemsTable.categoryId,
-      categoryName: categoriesTable.name,
-      isVeg: menuItemsTable.isVeg,
-      isAvailable: menuItemsTable.isAvailable,
-      imageUrl: menuItemsTable.imageUrl,
-      videoUrl: menuItemsTable.videoUrl,
-      preparationTime: menuItemsTable.preparationTime,
-      spiceLevel: menuItemsTable.spiceLevel,
-      tags: menuItemsTable.tags,
-      createdAt: menuItemsTable.createdAt,
-    })
+    .select(selectFields)
     .from(menuItemsTable)
     .leftJoin(categoriesTable, eq(menuItemsTable.categoryId, categoriesTable.id))
     .where(eq(menuItemsTable.id, params.data.id));
@@ -93,7 +101,7 @@ router.get("/menu-items/:id", async (req, res): Promise<void> => {
     res.status(404).json({ error: "Menu item not found" });
     return;
   }
-  res.json({ ...item, price: Number(item.price) });
+  res.json(toItem(item as Record<string, unknown>));
 });
 
 router.patch("/menu-items/:id", async (req, res): Promise<void> => {
@@ -109,6 +117,9 @@ router.patch("/menu-items/:id", async (req, res): Promise<void> => {
   }
   const updateData: Record<string, unknown> = { ...parsed.data, updatedAt: new Date() };
   if (parsed.data.price != null) updateData.price = String(parsed.data.price);
+  if ("originalPrice" in parsed.data) {
+    updateData.originalPrice = parsed.data.originalPrice != null ? String(parsed.data.originalPrice) : null;
+  }
 
   const [item] = await db
     .update(menuItemsTable)
@@ -120,7 +131,7 @@ router.patch("/menu-items/:id", async (req, res): Promise<void> => {
     res.status(404).json({ error: "Menu item not found" });
     return;
   }
-  res.json({ ...item, price: Number(item.price) });
+  res.json(toItem(item as Record<string, unknown>));
 });
 
 router.delete("/menu-items/:id", async (req, res): Promise<void> => {

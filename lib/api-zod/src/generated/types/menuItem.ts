@@ -13,11 +13,14 @@ export interface MenuItem {
   /** @nullable */
   description?: string | null;
   price: number;
+  /** @nullable */
+  originalPrice?: number | null;
   categoryId: number;
   /** @nullable */
   categoryName?: string | null;
   isVeg: boolean;
   isAvailable: boolean;
+  isBestseller: boolean;
   /** @nullable */
   imageUrl?: string | null;
   /** @nullable */
@@ -28,5 +31,19 @@ export interface MenuItem {
   spiceLevel?: MenuItemSpiceLevel;
   /** @nullable */
   tags?: string | null;
+  /** @nullable */
+  ingredients?: string | null;
+  /** @nullable */
+  calories?: number | null;
+  /** @nullable */
+  protein?: string | null;
+  /** @nullable */
+  carbs?: string | null;
+  /** @nullable */
+  fat?: string | null;
+  /** @nullable */
+  allergenInfo?: string | null;
+  /** @nullable */
+  pairWithIds?: string | null;
   createdAt: string;
 }
